@@ -65,8 +65,8 @@ public class Ducky : EditorWindow
     Rect DuckyRect;
 
     GameObject source;
-    List<string> count = new List<string>();
-    GameObject instsource;
+    [SerializeField] List<string> count = new List<string>();
+    [SerializeField] GameObject instsource;
 
     private void OnEnable()
     {
@@ -95,28 +95,30 @@ public class Ducky : EditorWindow
         EditorPrefs.SetInt("DUCKY_TOOL_op2", (int)op2);
         EditorPrefs.SetInt("DUCKY_TOOL_op3", (int)op3);
         SceneView.duringSceneGui -= DuringSceneGUI;
+        DestroyImmediate(instsource);
     }
 
     private void OnGUI()
     {
-        if (!count.Contains(SceneManager.GetActiveScene().name))
+        if (!count.Contains(SceneManager.GetActiveScene().name) || instsource == null)
         {
             instsource = Instantiate(source);
             instsource.hideFlags = HideFlags.HideInHierarchy;
 
+            count.Clear();
             count.Add(SceneManager.GetActiveScene().name);
         }
 
         //DestroyImmediate(source);
         for (int i = 0; i < count.Count; i++)
-        {   
-            if(count[i] != SceneManager.GetActiveScene().name)
+        {
+            if (count[i] != SceneManager.GetActiveScene().name)
             {
                 count.RemoveAt(i);
             }
         }
         so.Update();
-        using(new GUILayout.VerticalScope(EditorStyles.helpBox))
+        using (new GUILayout.VerticalScope(EditorStyles.helpBox))
         {
             GUILayout.Label("Ducky:", EditorStyles.boldLabel);
             GUILayout.Space(4);
@@ -212,14 +214,14 @@ public class Ducky : EditorWindow
 
         so.ApplyModifiedProperties();
     }
-
     void DuringSceneGUI(SceneView sceneView)
     {
-        if (!count.Contains(SceneManager.GetActiveScene().name))
+        if (!count.Contains(SceneManager.GetActiveScene().name) || instsource == null)
         {
             instsource = Instantiate(source);
             instsource.hideFlags = HideFlags.HideInHierarchy;
 
+            count.Clear();
             count.Add(SceneManager.GetActiveScene().name);
         }
 
@@ -242,16 +244,18 @@ public class Ducky : EditorWindow
 
             //Moving when Moving
             pose.x -= diffright * Mathf.Abs(sceneView.camera.transform.InverseTransformDirection(newdir).x) * 300 / dist;
-            pose.y -= diffup * Mathf.Abs(sceneView.camera.transform.InverseTransformDirection(newdir).y) * 700 / dist;
+            pose.y -= diffup * Mathf.Abs(sceneView.camera.transform.InverseTransformDirection(newdir).y) * 1300 / dist;
 
             //Moving when Rotating
-            Vector3 somerot = rot - lastrot;
-            pose -= Vector3.right * somerot.magnitude * Mathf.Sign(Vector3.Dot(-sceneView.camera.transform.right, lastrot)) * 200;
-            pose -= Vector3.up * somerot.magnitude * Mathf.Sign(Vector3.Dot(sceneView.camera.transform.up, lastrot)) * 250;
+            ///Vector3 somerot = rot - lastrot;
+            //pose -= Vector3.right * somerot.magnitude * Mathf.Sign(Vector3.Dot(-sceneView.camera.transform.right, lastrot)) * 200;
+            //pose -= Vector3.up * somerot.magnitude * Mathf.Sign(Vector3.Dot(sceneView.camera.transform.up, lastrot)) * 250;
+            pose.x -= Vector3.Dot(-sceneView.camera.transform.right, lastrot) * 300;
+            pose.y -= Mathf.Sign(Vector3.Dot(sceneView.camera.transform.up, lastrot)) * Mathf.Abs(sceneView.camera.transform.forward.y - lastrot.y) * 1000;
 
             pose.y += 1;
-            pose.x = Mathf.Clamp(pose.x, 0, sceneView.camera.scaledPixelWidth / 2 - propsize.floatValue);
-            pose.y = Mathf.Clamp(pose.y, 0, sceneView.camera.scaledPixelHeight / 2 - propsize.floatValue);
+            pose.x = Mathf.Clamp(pose.x, 0, sceneView.camera.scaledPixelWidth / 1.5f - propsize.floatValue);
+            pose.y = Mathf.Clamp(pose.y, 0, sceneView.camera.scaledPixelHeight / 1.5f - propsize.floatValue);
 
             screenPos = new Rect(flip == false ? pose.x : pose.x + propsize.floatValue, pose.y, flip == false ? propsize.floatValue : -propsize.floatValue, propsize.floatValue);
             Buttonpos = new Rect(pose.x + 20, pose.y + 10, propsize.floatValue - 40, propsize.floatValue - 20);
@@ -313,7 +317,7 @@ public class Ducky : EditorWindow
         if (!animate || OPTIONS2.Static == op2)
             return;
 
-        if (pose.y >= sceneView.camera.scaledPixelHeight / 2 - propsize.floatValue - 10)
+        if (pose.y >= sceneView.camera.scaledPixelHeight / 1.5f - propsize.floatValue - 10)
         {
             BedTime--;
             if (Event.current.type == EventType.MouseMove || Event.current.type == EventType.MouseDrag || Event.current.type == EventType.MouseDown || Event.current.type == EventType.MouseLeaveWindow)
@@ -342,7 +346,7 @@ public class Ducky : EditorWindow
                     }
                 }
 
-                if(animtex == animload.Quack && Frame >= 11)
+                if (animtex == animload.Quack && Frame >= 11)
                 {
                     animtex = animload.Idleling1;
                 }
@@ -353,7 +357,7 @@ public class Ducky : EditorWindow
                 animtex = animload.Sleeping;
             }
         }
-        else if (pose.y < sceneView.camera.scaledPixelHeight / 2 - propsize.floatValue - 10 && OPTIONS2.Dynamic == op2)
+        else if (pose.y < sceneView.camera.scaledPixelHeight / 1.5f - propsize.floatValue - 10 && OPTIONS2.Dynamic == op2)
         {
             animtex = animload.Falling;
         }
